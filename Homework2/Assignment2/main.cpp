@@ -15,7 +15,7 @@ Eigen::Matrix4f get_view_matrix(Eigen::Vector3f eye_pos)
     translate << 1,0,0,-eye_pos[0],
                  0,1,0,-eye_pos[1],
                  0,0,1,-eye_pos[2],
-                 0,0,0,1;
+                 0,0,0, 1;
 
     view = translate*view;
 
@@ -31,7 +31,41 @@ Eigen::Matrix4f get_model_matrix(float rotation_angle)
 Eigen::Matrix4f get_projection_matrix(float eye_fov, float aspect_ratio, float zNear, float zFar)
 {
     // TODO: Copy-paste your implementation from the previous assignment.
-    Eigen::Matrix4f projection;
+
+    Eigen::Matrix4f projection = Eigen::Matrix4f::Identity();
+    
+    /// 得到正交投影矩阵（先平移再缩放）
+    // 获取所需数据
+    float fov_Y = eye_fov * MY_PI / 180.0f;
+    float yTop =  -zNear * tan(fov_Y / 2); // zNear为负值，yTop为正，要加个负号 
+    float yBottom = -yTop;
+    float xRight = yTop * aspect_ratio;
+    float xLeft = -xRight;
+    // 平移矩阵
+    Eigen::Matrix4f translate;
+    translate << 1, 0, 0, -(xLeft+xRight)/2,
+                 0, 1, 0, -(yTop+yBottom)/2,
+                 0, 0, 1, -(zNear+zFar)/2,
+                 0, 0, 0, 1;
+    // 缩放矩阵
+    Eigen::Matrix4f scale;
+    scale << 2/(xRight-xLeft), 0,                0,              0,
+             0,                2/(yTop-yBottom), 0,              0,
+             0,                0,                2/(zNear-zFar), 0,
+             0,                0,                0,              1;
+    // 正交投影矩阵
+    Eigen::Matrix4f ortho = Eigen::Matrix4f::Identity();
+    ortho = scale * translate * ortho;
+
+    /// 得到透视投影转正交投影矩阵
+    Eigen::Matrix4f persp_to_ortho;
+    persp_to_ortho << zNear, 0,     0,           0,
+                      0,     zNear, 0,           0,
+                      0,     0,     zNear+zFar, -zNear*zFar,
+                      0,     0,     1,           0;
+
+    ///得到透视投影矩阵
+    projection = ortho * persp_to_ortho * projection;
 
     return projection;
 }
@@ -55,12 +89,12 @@ int main(int argc, const char** argv)
 
     std::vector<Eigen::Vector3f> pos
             {
-                    {2, 0, -2},
-                    {0, 2, -2},
-                    {-2, 0, -2},
-                    {3.5, -1, -5},
-                    {2.5, 1.5, -5},
-                    {-1, 0.5, -5}
+                    { 2,    0,   -2},
+                    { 0,    2,   -2},
+                    {-2,    0,   -2},
+                    { 3.5, -1,   -5},
+                    { 2.5,  1.5, -5},
+                    {-1,    0.5, -5}
             };
 
     std::vector<Eigen::Vector3i> ind

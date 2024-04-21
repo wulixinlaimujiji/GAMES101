@@ -39,10 +39,30 @@ auto to_vec4(const Eigen::Vector3f& v3, float w = 1.0f)
     return Vector4f(v3.x(), v3.y(), v3.z(), w);
 }
 
-
-static bool insideTriangle(int x, int y, const Vector3f* _v)
+static int insideTriangle(int x, int y, const std::array<Vector4f, 3> _v, int samplesNum)
 {   
     // TODO : Implement this function to check if the point (x, y) is inside the triangle represented by _v[0], _v[1], _v[2]
+    
+    // 获取点坐标
+    Vector3f A = { _v[0].x(), _v[0].y(), 1.0f };
+    Vector3f B = { _v[1].x(), _v[1].y(), 1.0f };
+    Vector3f C = { _v[2].x(), _v[2].y(), 1.0f };
+
+    // 在给定像素区域内进行多重采样，计算落在三角形内部的采样点数量
+    int count = 0; // 在三角形内的点数
+    for (int i = 0; i < samplesNum; ++i) {
+        float sampleX = x + (static_cast<float>(i) + 0.5f) / static_cast<float>(samplesNum);
+        for (int j = 0; j < samplesNum; ++j) {
+            float sampleY = y + (static_cast<float>(j) + 0.5f) / static_cast<float>(samplesNum);
+            
+            Vector3f P = { sampleX, sampleY, 1.0f };            
+            if (((B-A).cross(P-A)).z() < 0) { continue; }
+            if (((C-B).cross(P-B)).z() < 0) { continue; }
+            if (((A-C).cross(P-C)).z() < 0) { continue; }
+            ++count;
+        }
+    }
+    return count;
 }
 
 static std::tuple<float, float, float> computeBarycentric2D(float x, float y, const Vector3f* v)
@@ -104,18 +124,51 @@ void rst::rasterizer::draw(pos_buf_id pos_buffer, ind_buf_id ind_buffer, col_buf
 
 //Screen space rasterization
 void rst::rasterizer::rasterize_triangle(const Triangle& t) {
-    auto v = t.toVector4();
-    
     // TODO : Find out the bounding box of current triangle.
     // iterate through the pixel and find if the current pixel is inside the triangle
-
     // If so, use the following code to get the interpolated z value.
     //auto[alpha, beta, gamma] = computeBarycentric2D(x, y, t.v);
     //float w_reciprocal = 1.0/(alpha / v[0].w() + beta / v[1].w() + gamma / v[2].w());
     //float z_interpolated = alpha * v[0].z() / v[0].w() + beta * v[1].z() / v[1].w() + gamma * v[2].z() / v[2].w();
     //z_interpolated *= w_reciprocal;
-
     // TODO : set the current pixel (use the set_pixel function) to the color of the triangle (use getColor function) if it should be painted.
+    
+    // 寻找上下左右边界，创建boundingbox
+    auto v = t.toVector4();
+    float xMax = v[0].x(), xMin = v[0].x();
+    if (xMax < v[1].x()) { xMax = v[1].x(); }
+    if (xMax < v[2].x()) { xMax = v[2].x(); }
+    if (xMin > v[1].x()) { xMin = v[1].x(); }
+    if (xMin > v[2].x()) { xMin = v[2].x(); }
+    float yMax = v[0].y(), yMin = v[0].y();
+    if (yMax < v[1].y()) { yMax = v[1].y(); }
+    if (yMax < v[2].y()) { yMax = v[2].y(); }
+    if (yMin > v[1].y()) { yMin = v[1].y(); }
+    if (yMin > v[2].y()) { yMin = v[2].y(); }
+
+    // 遍历boundingbox中的点
+    for (int x = xMin; x <= xMax; ++x) {
+        for (int y = yMin; y <= yMax; ++y) {
+            
+            int samplesNum = 2;
+            int count = insideTriangle(x, y, v, samplesNum);
+            if (count) {
+                // 深度插值
+                auto[alpha, beta, gamma] = computeBarycentric2D(x, y, t.v);
+                float w_reciprocal = 1.0/(alpha / v[0].w() + beta / v[1].w() + gamma / v[2].w());
+                float z_interpolated = alpha * v[0].z() / v[0].w() + beta * v[1].z() / v[1].w() + gamma * v[2].z() / v[2].w();
+                z_interpolated *= w_reciprocal;
+                // 比较深度
+                int index = get_index(x, y);
+                if (depth_buf[index] > z_interpolated) {
+                    depth_buf[index] = z_interpolated;
+                    float coverage = static_cast<float>(count) / (samplesNum * samplesNum);
+                    set_pixel({(float)x, (float)y, 0.0f}, t.getColor() * coverage);
+                }
+            }
+            
+        }
+    }
 }
 
 void rst::rasterizer::set_model(const Eigen::Matrix4f& m)
@@ -161,7 +214,6 @@ void rst::rasterizer::set_pixel(const Eigen::Vector3f& point, const Eigen::Vecto
     //old index: auto ind = point.y() + point.x() * width;
     auto ind = (height-1-point.y())*width + point.x();
     frame_buf[ind] = color;
-
 }
 
 // clang-format on
