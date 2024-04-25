@@ -55,11 +55,14 @@ static int insideTriangle(int x, int y, const std::array<Vector4f, 3> _v, int sa
         for (int j = 0; j < samplesNum; ++j) {
             float sampleY = y + (static_cast<float>(j) + 0.5f) / static_cast<float>(samplesNum);
             
-            Vector3f P = { sampleX, sampleY, 1.0f };            
-            if (((B-A).cross(P-A)).z() < 0) { continue; }
-            if (((C-B).cross(P-B)).z() < 0) { continue; }
-            if (((A-C).cross(P-C)).z() < 0) { continue; }
-            ++count;
+            Vector3f P = { sampleX, sampleY, 1.0f };
+            
+            float result1 = ((B-A).cross(P-A)).z();
+	        float result2 = ((C-B).cross(P-B)).z();
+	        float result3 = ((A-C).cross(P-C)).z();
+
+            if (result1 < 0 && result2 < 0 && result3 < 0 || result1 > 0 && result2 > 0 && result3 > 0)
+		        ++count;
         }
     }
     return count;
