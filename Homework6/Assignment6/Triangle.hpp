@@ -218,9 +218,15 @@ inline Intersection Triangle::getIntersection(Ray ray)
 
 	// TODO find ray triangle intersection
 
+	if (t_tmp < 0)
+		return inter;
 
-
-
+	inter.happened = true;
+	inter.coords = ray(t_tmp);
+	inter.normal = normal;
+	inter.distance = t_tmp;
+	inter.obj = this;
+	inter.m = m;
 	return inter;
 }
 

@@ -96,6 +96,48 @@ inline bool Bounds3::IntersectP(const Ray& ray, const Vector3f& invDir, const st
 	// dirIsNeg: ray direction(x,y,z), dirIsNeg=[int(x>0),int(y>0),int(z>0)], use this to simplify your logic
 	// TODO test if ray bound intersects
 
+	float min_x_time = (pMin.x - ray.origin.x) * invDir.x;
+	float max_x_time = (pMax.x - ray.origin.x) * invDir.x;
+	if (dirIsNeg[0])
+	{
+		float temp = min_x_time;
+		min_x_time = max_x_time;
+		max_x_time = temp;
+	}
+
+	float min_y_time = (pMin.y - ray.origin.y) * invDir.y;
+	float max_y_time = (pMax.y - ray.origin.y) * invDir.y;
+	if (dirIsNeg[1])
+	{
+		float temp = min_y_time;
+		min_y_time = max_y_time;
+		max_y_time = temp;
+	}
+
+	float max_z_time = (pMax.z - ray.origin.z) * invDir.z;
+	float min_z_time = (pMin.z - ray.origin.z) * invDir.z;
+	if (dirIsNeg[2])
+	{
+		float temp = min_z_time;
+		min_z_time = max_z_time;
+		max_z_time = temp;
+	}
+
+	float enter_time = min_x_time;
+	if (enter_time < min_y_time)
+		enter_time = min_y_time;
+	if (enter_time < min_z_time)
+		enter_time = min_z_time;
+
+	float leave_time = max_x_time;
+	if (leave_time > max_y_time)
+		leave_time = max_y_time;
+	if (leave_time > max_z_time)
+		leave_time = max_z_time;
+
+	if (leave_time >= 0 && enter_time <= leave_time)
+		return true;
+	return false;
 }
 
 inline Bounds3 Union(const Bounds3& b1, const Bounds3& b2)
