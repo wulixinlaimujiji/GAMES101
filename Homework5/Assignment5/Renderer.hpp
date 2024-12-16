@@ -1,4 +1,5 @@
 #pragma once
+
 #include "Scene.hpp"
 
 struct hit_payload
@@ -13,6 +14,4 @@ class Renderer
 {
 public:
     void Render(const Scene& scene);
-
-private:
 };

@@ -4,10 +4,11 @@
 
 #pragma once
 
-#include <eigen3/Eigen/Eigen>
-#include <algorithm>
 #include "global.hpp"
 #include "Triangle.hpp"
+
+#include <eigen3/Eigen/Eigen>
+#include <algorithm>
 using namespace Eigen;
 
 namespace rst
