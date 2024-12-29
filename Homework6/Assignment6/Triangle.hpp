@@ -186,10 +186,7 @@ public:
 };
 
 inline bool Triangle::intersect(const Ray& ray) { return true; }
-inline bool Triangle::intersect(const Ray& ray, float& tnear, uint32_t& index) const
-{
-	return false;
-}
+inline bool Triangle::intersect(const Ray& ray, float& tnear, uint32_t& index) const { return false; }
 
 inline Bounds3 Triangle::getBounds() { return Union(Bounds3(v0, v1), v2); }
 

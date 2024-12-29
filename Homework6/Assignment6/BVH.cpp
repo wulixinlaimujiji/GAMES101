@@ -29,7 +29,10 @@ BVHBuildNode* BVHAccel::recursiveBuild(std::vector<Object*> objects)
 	// Compute bounds of all primitives in BVH node
 	Bounds3 bounds;
 	for (int i = 0; i < objects.size(); ++i)
+	{
 		bounds = Union(bounds, objects[i]->getBounds());
+	}
+
 	if (objects.size() == 1) {
 		// Create leaf _BVHBuildNode_
 		node->bounds = objects[0]->getBounds();
@@ -48,24 +51,38 @@ BVHBuildNode* BVHAccel::recursiveBuild(std::vector<Object*> objects)
 	else {
 		Bounds3 centroidBounds;
 		for (int i = 0; i < objects.size(); ++i)
+		{
 			centroidBounds = Union(centroidBounds, objects[i]->getBounds().Centroid());
+		}
+
 		int dim = centroidBounds.maxExtent();
-		switch (dim) {
-		case 0:
-			std::sort(objects.begin(), objects.end(), [](auto f1, auto f2) {
-				return f1->getBounds().Centroid().x < f2->getBounds().Centroid().x;
-				});
-			break;
-		case 1:
-			std::sort(objects.begin(), objects.end(), [](auto f1, auto f2) {
-				return f1->getBounds().Centroid().y < f2->getBounds().Centroid().y;
-				});
-			break;
-		case 2:
-			std::sort(objects.begin(), objects.end(), [](auto f1, auto f2) {
-				return f1->getBounds().Centroid().z < f2->getBounds().Centroid().z;
-				});
-			break;
+		if (this->splitMethod == SplitMethod::NAIVE)
+		{
+			switch (dim)
+			{
+				case 0:
+					std::sort(objects.begin(), objects.end(), [](auto f1, auto f2)
+						{
+							return f1->getBounds().Centroid().x < f2->getBounds().Centroid().x;
+						});
+					break;
+				case 1:
+					std::sort(objects.begin(), objects.end(), [](auto f1, auto f2)
+						{
+							return f1->getBounds().Centroid().y < f2->getBounds().Centroid().y;
+						});
+					break;
+				case 2:
+					std::sort(objects.begin(), objects.end(), [](auto f1, auto f2)
+						{
+							return f1->getBounds().Centroid().z < f2->getBounds().Centroid().z;
+						});
+					break;
+			}
+		}
+		else if(this->splitMethod == SplitMethod::SAH)
+		{
+
 		}
 
 		auto beginning = objects.begin();

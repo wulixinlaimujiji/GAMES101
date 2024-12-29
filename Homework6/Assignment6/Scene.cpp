@@ -3,7 +3,11 @@
 void Scene::buildBVH()
 {
 	printf(" - Generating BVH...\n\n");
+#if USE_SAH
+	this->bvh = new BVHAccel(objects, 1, BVHAccel::SplitMethod::SAH);
+#else
 	this->bvh = new BVHAccel(objects, 1, BVHAccel::SplitMethod::NAIVE);
+#endif
 }
 
 Intersection Scene::intersect(const Ray& ray) const
@@ -90,9 +94,7 @@ Vector3f Scene::castRay(const Ray& ray, int depth) const
 				// is composed of a diffuse and a specular reflection component.
 				// [/comment]
 				Vector3f lightAmt = 0, specularColor = 0;
-				Vector3f shadowPointOrig = (dotProduct(ray.direction, N) < 0) ?
-					hitPoint + N * EPSILON :
-					hitPoint - N * EPSILON;
+				Vector3f shadowPointOrig = (dotProduct(ray.direction, N) < 0) ? hitPoint + N * EPSILON : hitPoint - N * EPSILON;
 				// [comment]
 				// Loop over all lights in the scene and sum their contribution up
 				// We also apply the lambert cosine law

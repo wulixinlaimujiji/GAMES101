@@ -16,9 +16,8 @@
 #include <memory>
 #include <ctime>
 
-struct BVHBuildNode;
 // BVHAccel Forward Declarations
-struct BVHPrimitiveInfo;
+struct BVHBuildNode;
 
 // BVHAccel Declarations
 inline int leafNodes, totalLeafNodes, totalPrimitives, interiorNodes;
@@ -29,7 +28,11 @@ public:
 	enum class SplitMethod { NAIVE, SAH };
 
 	// BVHAccel Public Methods
+#if USE_SAH
+	BVHAccel(std::vector<Object*> p, int maxPrimsInNode = 1, SplitMethod splitMethod = SplitMethod::SAH);
+#else
 	BVHAccel(std::vector<Object*> p, int maxPrimsInNode = 1, SplitMethod splitMethod = SplitMethod::NAIVE);
+#endif
 	Bounds3 WorldBound() const;
 	~BVHAccel();
 
@@ -63,6 +66,13 @@ public:
 		left = nullptr; right = nullptr;
 		object = nullptr;
 	}
+};
+
+struct Bucket
+{
+	Bounds3 bounds;
+	int count;
+	std::vector<Object*> objects;
 };
 
 #endif //RAYTRACING_BVH_H

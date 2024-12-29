@@ -7,6 +7,8 @@
 #undef M_PI
 #define M_PI 3.141592653589793f
 
+#define USE_SAH 1
+
 extern const float  EPSILON;
 const float kInfinity = std::numeric_limits<float>::max();
 
